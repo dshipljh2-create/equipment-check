@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>1. 스크래바 점검 체크시트</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { font-family: "Noto Sans KR", sans-serif; margin: 20px; }
+  h2 { color: #333; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+  th { background: #f5f5f5; font-weight: bold; }
+  input[type="text"] { width: 100%; padding: 4px; box-sizing: border-box; }
+  label { margin-right: 10px; cursor: pointer; }
+  input[type="radio"] { margin-right: 3px; cursor: pointer; }
+  button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 8px; background: #007bff; color: white; cursor: pointer; font-size: 16px; }
+  button:hover { background: #0056b3; }
+  button:disabled { background: #ccc; cursor: not-allowed; }
+  .access-denied { 
+    background: #f8d7da; 
+    color: #721c24; 
+    padding: 20px; 
+    border-radius: 8px; 
+    margin: 20px 0; 
+    text-align: center;
+    border: 2px solid #f5c6cb;
+  }
+  .access-granted {
+    background: #d4edda;
+    color: #155724;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h2>1. 스크래바 점검 체크시트</h2>
+
+<div id="accessStatus"></div>
+
+<div id="contentArea" style="display: none;">
+  <table>
+    <tr>
+      <th>코드</th><th>부위</th><th>점검항목</th><th>기준</th><th>빈도</th><th>결과입력</th>
+    </tr>
+    <tr>
+      <td>check1-1</td>
+      <td>모터</td>
+      <td>소음 확인</td>
+      <td>이상 없을것</td>
+      <td>1회/일</td>
+      <td>
+        <label><input type="radio" name="check1-1" value="정상" checked> 정상</label>
+        <label><input type="radio" name="check1-1" value="비정상"> 비정상</label>
+      </td>
+    </tr>
+    <tr>
+      <td>check1-2</td>
+      <td>벨트</td>
+      <td>적정 장력유지 확인</td>
+      <td>출렁이지 않을것</td>
+      <td>1회/일</td>
+      <td>
+        <label><input type="radio" name="check1-2" value="정상" checked> 정상</label>
+        <label><input type="radio" name="check1-2" value="비정상"> 비정상</label>
+      </td>
+    </tr>
+    <tr>
+      <td>check1-3</td>
+      <td>본체</td>
+      <td>노즐 분사 여부 확인</td>
+      <td>분사가 될것</td>
+      <td>1회/일</td>
+      <td>
+        <label><input type="radio" name="check1-3" value="정상" checked> 정상</label>
+        <label><input type="radio" name="check1-3" value="비정상"> 비정상</label>
+      </td>
+    </tr>
+    <tr>
+      <td>check1-4</td>
+      <td>본체</td>
+      <td>저장조 적정 수위 확인</td>
+      <td>볼탑까지 채울것</td>
+      <td>1회/일</td>
+      <td>
+        <label><input type="radio" name="check1-4" value="정상" checked> 정상</label>
+        <label><input type="radio" name="check1-4" value="비정상"> 비정상</label>
+      </td>
+    </tr>
+    <tr>
+      <td>check1-5</td>
+      <td>본체</td>
+      <td>균열 확인</td>
+      <td>누수가 없을것</td>
+      <td>1회/일</td>
+      <td>
+        <label><input type="radio" name="check1-5" value="정상" checked> 정상</label>
+        <label><input type="radio" name="check1-5" value="비정상"> 비정상</label>
+      </td>
+    </tr>
+    <tr>
+      <td>check1-6</td>
+      <td>본체</td>
+      <td>저장조 PH 확인</td>
+      <td>PH7 이상일것</td>
+      <td>1회/일</td>
+      <td><input type="text" id="check1-6" placeholder="점검 결과 입력"></td>
+    </tr>
+    <tr>
+      <td>check1-7</td>
+      <td>베어링</td>
+      <td>그리스 주입</td>
+      <td>가득 채울것</td>
+      <td>1회/월</td>
+      <td>
+        <label><input type="radio" name="check1-7" value="정상" checked> 정상</label>
+        <label><input type="radio" name="check1-7" value="비정상"> 비정상</label>
+      </td>
+    </tr>
+    <tr>
+      <td>check1-8</td>
+      <td>종합</td>
+      <td>특이사항</td>
+      <td></td>
+      <td></td>
+      <td><input type="text" id="check1-8" placeholder="점검 결과 입력"></td>
+    </tr>
+  </table>
+
+  <button id="saveBtn">작성 완료</button>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://vqimgnjodisawujcwfuv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxaW1nbmpvZGlzYXd1amN3ZnV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwMjkzOTYsImV4cCI6MjA3ODYwNTM5Nn0.j31IoziLjkiQ0r7il8PUOEv9ylGm6ZTIVGSVDVgS5F0';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// 🔐 보안 토큰 설정 (이 토큰을 QR코드 URL에 포함시켜야 합니다)
+const VALID_TOKEN = 'EQUIP_CHECK_2024_SECURE';
+
+const equipmentName = '1. 스크래바';
+const textInputCodes = ["check1-6", "check1-8"];
+const checkItems = [{"code": "check1-1", "part": "모터", "point": "소음 확인", "standard": "이상 없을것", "freq": "1회/일"}, {"code": "check1-2", "part": "벨트", "point": "적정 장력유지 확인", "standard": "출렁이지 않을것", "freq": "1회/일"}, {"code": "check1-3", "part": "본체", "point": "노즐 분사 여부 확인", "standard": "분사가 될것", "freq": "1회/일"}, {"code": "check1-4", "part": "본체", "point": "저장조 적정 수위 확인", "standard": "볼탑까지 채울것", "freq": "1회/일"}, {"code": "check1-5", "part": "본체", "point": "균열 확인", "standard": "누수가 없을것", "freq": "1회/일"}, {"code": "check1-6", "part": "본체", "point": "저장조 PH 확인", "standard": "PH7 이상일것", "freq": "1회/일"}, {"code": "check1-7", "part": "베어링", "point": "그리스 주입", "standard": "가득 채울것", "freq": "1회/월"}, {"code": "check1-8", "part": "종합", "point": "특이사항", "standard": "", "freq": ""}];
+
+// 🔐 토큰 검증 함수
+function verifyAccess() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
+  
+  // 세션 스토리지에서 저장된 토큰 확인
+  const savedToken = sessionStorage.getItem('access_token');
+  
+  if (token === VALID_TOKEN) {
+    // 유효한 토큰이면 세션에 저장
+    sessionStorage.setItem('access_token', token);
+    return true;
+  } else if (savedToken === VALID_TOKEN) {
+    // 세션에 저장된 토큰이 유효하면 허용 (새로고침 대응)
+    return true;
+  }
+  
+  return false;
+}
+
+// 🔐 페이지 로드 시 접근 권한 확인
+window.addEventListener('DOMContentLoaded', () => {
+  const accessStatus = document.getElementById('accessStatus');
+  const contentArea = document.getElementById('contentArea');
+  const saveBtn = document.getElementById('saveBtn');
+  
+  if (verifyAccess()) {
+    // ✅ 접근 허용
+    accessStatus.innerHTML = '<div class="access-granted">✅ QR코드를 통한 정상 접근이 확인되었습니다.</div>';
+    contentArea.style.display = 'block';
+  } else {
+    // ❌ 접근 거부
+    accessStatus.innerHTML = `
+      <div class="access-denied">
+        <h3>⚠️ 접근 권한이 없습니다</h3>
+        <p>이 페이지는 QR코드를 통해서만 접근할 수 있습니다.</p>
+        <p>올바른 QR코드를 스캔해주세요.</p>
+      </div>
+    `;
+    contentArea.style.display = 'none';
+  }
+});
+
+// 💾 저장 버튼 클릭
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  // 저장 시점에 다시 한번 토큰 확인
+  if (!verifyAccess()) {
+    alert('⚠️ 접근 권한이 없습니다. QR코드를 통해 접속해주세요.');
+    return;
+  }
+  
+  const now = new Date().toISOString();
+  const records = [];
+
+  checkItems.forEach(item => {
+    let val = '';
+    if (textInputCodes.includes(item.code)) {
+      val = document.getElementById(item.code)?.value || '';
+    } else {
+      const radio = document.querySelector(`input[name="${item.code}"]:checked`);
+      val = radio ? radio.value : '정상';
+    }
+    
+    if (val.trim() !== '') {
+      records.push({
+        check_code: item.code,
+        equipment: equipmentName,
+        check_result: val,
+        check_time: now
+      });
+    }
+  });
+
+  if (records.length === 0) {
+    alert('입력값이 없습니다.');
+    return;
+  }
+
+  const { error } = await supabase.from('check_logs').insert(records);
+  if (error) {
+    alert('저장 실패: ' + error.message);
+  } else {
+    alert('저장 완료!');
+    // 입력값 초기화 (선택사항)
+    // location.reload();
+  }
+});
+</script>
+</body>
+</html>
