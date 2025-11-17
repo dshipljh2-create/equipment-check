@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>7. 오일프리콤프100 점검 체크시트</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { font-family: "Noto Sans KR", sans-serif; margin: 20px; }
+  h2 { color: #333; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+  th { background: #f5f5f5; font-weight: bold; }
+  input[type="text"] { width: 100%; padding: 4px; box-sizing: border-box; }
+  label { margin-right: 10px; cursor: pointer; }
+  input[type="radio"] { margin-right: 3px; cursor: pointer; }
+  button { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 8px; background: #007bff; color: white; cursor: pointer; font-size: 16px; }
+  button:hover { background: #0056b3; }
+  button:disabled { background: #ccc; cursor: not-allowed; }
+  .access-denied { 
+    background: #f8d7da; 
+    color: #721c24; 
+    padding: 20px; 
+    border-radius: 8px; 
+    margin: 20px 0; 
+    text-align: center;
+    border: 2px solid #f5c6cb;
+  }
+  .access-granted {
+    background: #d4edda;
+    color: #155724;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h2>7. 오일프리콤프100 점검 체크시트</h2>
+
+<div id="accessStatus"></div>
+
+<div id="contentArea" style="display: none;">
+  <table>
+    <tr>
+      <th>코드</th><th>부위</th><th>점검항목</th><th>기준</th><th>빈도</th><th>결과입력</th>
+    </tr>
+    <tr>
+      <td>check7-1</td>
+      <td>모터</td>
+      <td>소음 확인</td>
+      <td>이상 없을것</td>
+      <td>1회/일</td>
+      <td><label><input type="radio" name="check7-1" value="정상" checked> 정상</label>
+        <label><input type="radio" name="check7-1" value="비정상"> 비정상</label></td>
+    </tr>
+    <tr>
+      <td>check7-2</td>
+      <td>흡착식 드라이어</td>
+      <td>스위치 확인</td>
+      <td>ON 상태일것</td>
+      <td>1회/일</td>
+      <td><label><input type="radio" name="check7-2" value="정상" checked> 정상</label>
+        <label><input type="radio" name="check7-2" value="비정상"> 비정상</label></td>
+    </tr>
+    <tr>
+      <td>check7-3</td>
+      <td>공기탱크</td>
+      <td>수분 배출</td>
+      <td>밸브 오픈하여 배출</td>
+      <td>1회/일</td>
+      <td><label><input type="radio" name="check7-3" value="정상" checked> 정상</label>
+        <label><input type="radio" name="check7-3" value="비정상"> 비정상</label></td>
+    </tr>
+    <tr>
+      <td>check7-4</td>
+      <td>압축기</td>
+      <td>소음 확인</td>
+      <td>이상 없을것</td>
+      <td>1회/일</td>
+      <td><label><input type="radio" name="check7-4" value="정상" checked> 정상</label>
+        <label><input type="radio" name="check7-4" value="비정상"> 비정상</label></td>
+    </tr>
+    <tr>
+      <td>check7-5</td>
+      <td>압축기</td>
+      <td>그리스 주입</td>
+      <td>가득 채울것</td>
+      <td>1회/월</td>
+      <td><label><input type="radio" name="check7-5" value="정상" checked> 정상</label>
+        <label><input type="radio" name="check7-5" value="비정상"> 비정상</label></td>
+    </tr>
+    <tr>
+      <td>check7-6</td>
+      <td>제어반</td>
+      <td>전자 접촉기 소음 확인</td>
+      <td>이상 없을것</td>
+      <td>1회/월</td>
+      <td><label><input type="radio" name="check7-6" value="정상" checked> 정상</label>
+        <label><input type="radio" name="check7-6" value="비정상"> 비정상</label></td>
+    </tr>
+    <tr>
+      <td>check7-7</td>
+      <td>제어반</td>
+      <td>전기배선 열화상태</td>
+      <td>피복 벗겨짐 없을것</td>
+      <td>1회/월</td>
+      <td><label><input type="radio" name="check7-7" value="정상" checked> 정상</label>
+        <label><input type="radio" name="check7-7" value="비정상"> 비정상</label></td>
+    </tr>
+    <tr>
+      <td>check7-8</td>
+      <td>종합</td>
+      <td>특이사항</td>
+      <td></td>
+      <td></td>
+      <td><input type="text" id="check7-8" placeholder="점검 결과 입력"></td>
+    </tr>
+  </table>
+
+  <button id="saveBtn">작성 완료</button>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://vqimgnjodisawujcwfuv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxaW1nbmpvZGlzYXd1amN3ZnV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwMjkzOTYsImV4cCI6MjA3ODYwNTM5Nn0.j31IoziLjkiQ0r7il8PUOEv9ylGm6ZTIVGSVDVgS5F0';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const VALID_TOKEN = 'EQUIP_CHECK_2024_SECURE';
+const equipmentName = '7. 오일프리콤프100';
+const textInputCodes = ["check7-8"];
+const checkItems = [{"code": "check7-1", "part": "모터", "point": "소음 확인", "standard": "이상 없을것", "freq": "1회/일"}, {"code": "check7-2", "part": "흡착식 드라이어", "point": "스위치 확인", "standard": "ON 상태일것", "freq": "1회/일"}, {"code": "check7-3", "part": "공기탱크", "point": "수분 배출", "standard": "밸브 오픈하여 배출", "freq": "1회/일"}, {"code": "check7-4", "part": "압축기", "point": "소음 확인", "standard": "이상 없을것", "freq": "1회/일"}, {"code": "check7-5", "part": "압축기", "point": "그리스 주입", "standard": "가득 채울것", "freq": "1회/월"}, {"code": "check7-6", "part": "제어반", "point": "전자 접촉기 소음 확인", "standard": "이상 없을것", "freq": "1회/월"}, {"code": "check7-7", "part": "제어반", "point": "전기배선 열화상태", "standard": "피복 벗겨짐 없을것", "freq": "1회/월"}, {"code": "check7-8", "part": "종합", "point": "특이사항", "standard": "", "freq": ""}];
+
+function verifyAccess() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
+  const savedToken = sessionStorage.getItem('access_token');
+  
+  if (token === VALID_TOKEN) {
+    sessionStorage.setItem('access_token', token);
+    return true;
+  } else if (savedToken === VALID_TOKEN) {
+    return true;
+  }
+  return false;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const accessStatus = document.getElementById('accessStatus');
+  const contentArea = document.getElementById('contentArea');
+  
+  if (verifyAccess()) {
+    accessStatus.innerHTML = '<div class="access-granted">✅ QR코드를 통한 정상 접근이 확인되었습니다.</div>';
+    contentArea.style.display = 'block';
+  } else {
+    accessStatus.innerHTML = `
+      <div class="access-denied">
+        <h3>⚠️ 접근 권한이 없습니다</h3>
+        <p>이 페이지는 QR코드를 통해서만 접근할 수 있습니다.</p>
+        <p>올바른 QR코드를 스캔해주세요.</p>
+      </div>
+    `;
+    contentArea.style.display = 'none';
+  }
+});
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  if (!verifyAccess()) {
+    alert('⚠️ 접근 권한이 없습니다. QR코드를 통해 접속해주세요.');
+    return;
+  }
+  
+  const now = new Date().toISOString();
+  const records = [];
+
+  checkItems.forEach(item => {
+    let val = '';
+    if (textInputCodes.includes(item.code)) {
+      val = document.getElementById(item.code)?.value || '';
+    } else {
+      const radio = document.querySelector(`input[name="${item.code}"]:checked`);
+      val = radio ? radio.value : '정상';
+    }
+    
+    if (val.trim() !== '') {
+      records.push({
+        check_code: item.code,
+        equipment: equipmentName,
+        check_result: val,
+        check_time: now
+      });
+    }
+  });
+
+  if (records.length === 0) {
+    alert('입력값이 없습니다.');
+    return;
+  }
+
+  const { error } = await supabase.from('check_logs').insert(records);
+  if (error) {
+    alert('저장 실패: ' + error.message);
+  } else {
+    alert('저장 완료!');
+  }
+});
+</script>
+</body>
+</html>

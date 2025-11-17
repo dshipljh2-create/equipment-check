@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>장비 점검 현황 조회</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { 
+    font-family: "Noto Sans KR", sans-serif; 
+    margin: 20px; 
+    background: #f8f9fa;
+  }
+  
+  .header {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .header-left {
+    flex: 1;
+  }
+  
+  h2 {
+    margin: 0 0 20px 0;
+    color: #333;
+  }
+  
+  .controls {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .control-group label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+  }
+  
+  select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    min-width: 150px;
+    cursor: pointer;
+  }
+  
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 20px;
+  }
+  
+  button:hover {
+    background: #0056b3;
+  }
+  
+  .print-btn {
+    background: #28a745;
+    margin-top: 0;
+    margin-left: 20px;
+  }
+  
+  .print-btn:hover {
+    background: #218838;
+  }
+  
+  .table-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 1500px;
+  }
+  
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  
+  th {
+    background: #f5f5f5;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  .fixed-col {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 5;
+  }
+  
+  .fixed-col-header {
+    position: sticky;
+    left: 0;
+    background: #f5f5f5;
+    z-index: 15;
+  }
+  
+  .day-header {
+    min-width: 60px;
+    font-size: 12px;
+  }
+  
+  .result-cell {
+    min-width: 60px;
+  }
+  
+  .result-ok {
+    background: #d4edda;
+    color: #155724;
+  }
+  
+  .result-ng {
+    background: #f8d7da;
+    color: #721c24;
+  }
+  
+  .result-text {
+    background: #fff3cd;
+    color: #856404;
+    font-size: 11px;
+  }
+  
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+  }
+  
+  .no-data {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+  }
+  
+  .info-col {
+    text-align: left;
+    padding-left: 10px;
+  }
+  
+  /* 특이사항 섹션 */
+  .special-notes {
+    margin-top: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .special-notes h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+  }
+  
+  .week-notes {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+  }
+  
+  .week-box {
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+  }
+  
+  .week-box h4 {
+    margin: 0 0 10px 0;
+    color: #007bff;
+    font-size: 14px;
+  }
+  
+  .week-box .content {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 10px;
+    min-height: 100px;
+    font-size: 13px;
+    color: #333;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  
+  .week-box .content.empty {
+    color: #999;
+    font-style: italic;
+  }
+  
+  /* 출력 스타일 */
+  @media print {
+    @page {
+      size: A4 landscape; /* 가로 방향 출력 */
+      margin: 10mm;
+    }
+    
+    body { 
+      margin: 0; 
+      background: white;
+    }
+    
+    .no-print { 
+      display: none !important; 
+    }
+    
+    .print-header { 
+      display: block !important; 
+    }
+    
+    .table-container {
+      box-shadow: none;
+      padding: 10px;
+      overflow: visible;
+    }
+    
+    table {
+      min-width: 0 !important;
+      width: 100% !important;
+      font-size: 8px !important;
+      page-break-inside: auto;
+    }
+    
+    th, td {
+      padding: 3px 2px !important;
+      font-size: 8px !important;
+      white-space: nowrap;
+    }
+    
+    .fixed-col, .fixed-col-header {
+      position: static !important;
+    }
+    
+    .info-col {
+      font-size: 7px !important;
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .day-header {
+      min-width: 20px !important;
+      font-size: 7px !important;
+    }
+    
+    .result-cell {
+      min-width: 20px !important;
+      font-size: 9px !important;
+    }
+    
+    .special-notes {
+      box-shadow: none;
+      page-break-before: avoid; /* 같은 페이지에 표시 */
+      margin-top: 15px;
+      padding: 10px;
+      font-size: 10px;
+    }
+    
+    .special-notes h3 {
+      font-size: 12px !important;
+      margin-bottom: 8px !important;
+    }
+    
+    .week-notes {
+      gap: 8px;
+    }
+    
+    .week-box {
+      padding: 8px;
+    }
+    
+    .week-box h4 {
+      font-size: 10px !important;
+      margin-bottom: 5px !important;
+    }
+    
+    .week-box .content {
+      font-size: 8px !important;
+      min-height: 40px;
+      padding: 5px;
+    }
+  }
+  
+  .print-header {
+    display: none;
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+    padding-top: 20px;
+  }
+  
+  .print-header h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+  }
+  
+  .print-header .equipment-info {
+    margin-top: 15px;
+    font-size: 18px;
+    color: #666;
+  }
+  
+  .approval-box {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    border: 2px solid #000;
+    padding: 5px;
+  }
+  
+  .approval-box table {
+    border-collapse: collapse;
+    margin: 0;
+    min-width: 0;
+  }
+  
+  .approval-box td {
+    border: 1px solid #000;
+    padding: 8px 15px;
+    text-align: center;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  
+  .approval-title {
+    font-weight: bold;
+    background: #f0f0f0;
+  }
+</style>
+</head>
+<body>
+
+<div class="header no-print">
+  <div class="header-left">
+    <h2>📊 장비 점검 현황 조회</h2>
+    
+    <div class="controls">
+      <div class="control-group">
+        <label>장비 선택</label>
+        <select id="equipmentSelect">
+          <option value="">-- 장비 선택 --</option>
+          <option value="1스크래바">1. 스크래바</option>
+          <option value="2순수설비50">2. 순수설비50</option>
+          <option value="3순수설비100">3. 순수설비100</option>
+          <option value="4순수설비200">4. 순수설비200</option>
+          <option value="5스크류콤프">5. 스크류콤프</option>
+          <option value="6오일프리콤프50">6. 오일프리콤프50</option>
+          <option value="7오일프리콤프100">7. 오일프리콤프100</option>
+        </select>
+      </div>
+      
+      <div class="control-group">
+        <label>연도</label>
+        <select id="yearSelect">
+          <option value="">-- 연도 선택 --</option>
+        </select>
+      </div>
+      
+      <div class="control-group">
+        <label>월</label>
+        <select id="monthSelect">
+          <option value="">-- 월 선택 --</option>
+          <option value="1">1월</option>
+          <option value="2">2월</option>
+          <option value="3">3월</option>
+          <option value="4">4월</option>
+          <option value="5">5월</option>
+          <option value="6">6월</option>
+          <option value="7">7월</option>
+          <option value="8">8월</option>
+          <option value="9">9월</option>
+          <option value="10">10월</option>
+          <option value="11">11월</option>
+          <option value="12">12월</option>
+        </select>
+      </div>
+      
+      <button id="searchBtn">📋 조회하기</button>
+    </div>
+  </div>
+  
+  <button class="print-btn" onclick="window.print()">🖨️ 출력</button>
+</div>
+
+<div class="print-header">
+  <div class="approval-box">
+    <table>
+      <tr>
+        <td class="approval-title">담당</td>
+        <td class="approval-title">검토</td>
+        <td class="approval-title">승인</td>
+      </tr>
+      <tr>
+        <td style="width: 60px; height: 60px;"></td>
+        <td style="width: 60px; height: 60px;"></td>
+        <td style="width: 60px; height: 60px;"></td>
+      </tr>
+    </table>
+  </div>
+  <h1>장비 점검 현황</h1>
+  <div class="equipment-info">
+    <strong>장비명:</strong> <span id="printEquipName">-</span> | 
+    <strong>점검월:</strong> <span id="printMonth">-</span>
+  </div>
+</div>
+
+<div class="table-container">
+  <div id="tableContent">
+    <div class="no-data">장비, 연도, 월을 선택하고 조회하기 버튼을 눌러주세요.</div>
+  </div>
+</div>
+
+<!-- 특이사항 주차별 누적 섹션 -->
+<div class="special-notes" id="specialNotesSection" style="display: none;">
+  <h3>📋 특이사항 (주차별 누적)</h3>
+  <div class="week-notes">
+    <div class="week-box">
+      <h4>1주차</h4>
+      <div class="content empty" id="week1Content">기록 없음</div>
+    </div>
+    <div class="week-box">
+      <h4>2주차</h4>
+      <div class="content empty" id="week2Content">기록 없음</div>
+    </div>
+    <div class="week-box">
+      <h4>3주차</h4>
+      <div class="content empty" id="week3Content">기록 없음</div>
+    </div>
+    <div class="week-box">
+      <h4>4주차</h4>
+      <div class="content empty" id="week4Content">기록 없음</div>
+    </div>
+    <div class="week-box">
+      <h4>5주차</h4>
+      <div class="content empty" id="week5Content">기록 없음</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://vqimgnjodisawujcwfuv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxaW1nbmpvZGlzYXd1amN3ZnV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwMjkzOTYsImV4cCI6MjA3ODYwNTM5Nn0.j31IoziLjkiQ0r7il8PUOEv9ylGm6ZTIVGSVDVgS5F0';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// 장비 데이터 정의
+const equipments = {
+  "1스크래바": [
+    { code: "check1-1", part: "모터", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
+    { code: "check1-2", part: "벨트", point: "적정 장력유지 확인", standard: "출렁이지 않을것", freq: "1회/일" },
+    { code: "check1-3", part: "본체", point: "노즐 분사 여부 확인", standard: "분사가 될것", freq: "1회/일" },
+    { code: "check1-4", part: "본체", point: "저장조 적정 수위 확인", standard: "볼탑까지 채울것", freq: "1회/일" },
+    { code: "check1-5", part: "본체", point: "균열 확인", standard: "누수가 없을것", freq: "1회/일" },
+    { code: "check1-6", part: "본체", point: "저장조 PH 확인", standard: "PH7 이상일것", freq: "1회/일" },
+    { code: "check1-7", part: "베어링", point: "그리스 주입", standard: "가득 채울것", freq: "1회/월" }
+  ],
+  "2순수설비50": [
+    { code: "check2-1", part: "전도도", point: "판넬확인", standard: "1㏁ 이상", freq: "1회/일" },
+    { code: "check2-2", part: "펌프", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
+    { code: "check2-3", part: "펌프", point: "누수 확인", standard: "없을것", freq: "1회/일" },
+    { code: "check2-4", part: "배관", point: "누수 확인", standard: "없을것", freq: "1회/일" },
+    { code: "check2-5", part: "필터", point: "입/출구 압력 편차", standard: "2k 이하", freq: "1회/주" },
+    { code: "check2-6", part: "멤브레인", point: "생산 유량", standard: "35L/min 이상", freq: "1회/주" },
+    { code: "check2-7", part: "제어반", point: "전기배선", standard: "피복 벗겨짐 없을것", freq: "1회/월" }
+  ],
+  "3순수설비100": [
+    { code: "check3-1", part: "전도도", point: "판넬확인", standard: "1㏁ 이상", freq: "1회/일" },
+    { code: "check3-2", part: "펌프", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
+    { code: "check3-3", part: "펌프", point: "누수 확인", standard: "없을것", freq: "1회/일" },
+    { code: "check3-4", part: "배관", point: "누수 확인", standard: "없을것", freq: "1회/일" },
+    { code: "check3-5", part: "필터", point: "입/출구 압력 편차", standard: "2k 이하", freq: "1회/주" },
+    { code: "check3-6", part: "멤브레인", point: "생산 유량", standard: "6 ton 이상", freq: "1회/주" },
+    { code: "check3-7", part: "제어반", point: "전기배선", standard: "피복 벗겨짐 없을것", freq: "1회/월" }
+  ],
+  "4순수설비200": [
+    { code: "check4-1", part: "전도도", point: "판넬확인", standard: "5㏁ 이상", freq: "1회/일" },
+    { code: "check4-2", part: "펌프", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
+    { code: "check4-3", part: "펌프", point: "누수 확인", standard: "없을것", freq: "1회/일" },
+    { code: "check4-4", part: "배관", point: "누수 확인", standard: "없을것", freq: "1회/일" },
+    { code: "check4-5", part: "필터", point: "입/출구 압력 편차", standard: "2k 이하", freq: "1회/주" },
+    { code: "check4-6", part: "멤브레인", point: "생산 유량", standard: "10 ton 이상", freq: "1회/주" },
+    { code: "check4-7", part: "제어반", point: "전기배선 확인", standard: "피복 벗겨짐 없을것", freq: "1회/월" }
+  ],
+  "5스크류콤프": [
+    { code: "check5-1", part: "모터", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
+    { code: "check5-2", part: "흡착식 드라이어", point: "스위치 확인", standard: "ON 상태일것", freq: "1회/일" },
+    { code: "check5-3", part: "공기탱크", point: "수분 배출", standard: "밸브 오픈하여 배출", freq: "1회/일" },
+    { code: "check5-4", part: "압축기", point: "소음 확인", standard: "굉음 없을것", freq: "1회/일" },
+    { code: "check5-5", part: "압축기", point: "그리스 주입", standard: "가득 채울것", freq: "1회/월" },
+    { code: "check5-6", part: "제어반", point: "전자 접촉기 소음 확인", standard: "이상 없을것", freq: "1회/월" },
+    { code: "check5-7", part: "제어반", point: "전기배선 열화상태", standard: "피복 벗겨짐 없을것", freq: "1회/월" }
+  ],
+  "6오일프리콤프50": [
+    { code: "check6-1", part: "모터", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
+    { code: "check6-2", part: "흡착식 드라이어", point: "스위치 확인", standard: "ON 상태일것", freq: "1회/일" },
+    { code: "check6-3", part: "공기탱크", point: "수분 배출", standard: "밸브 오픈하여 배출", freq: "1회/일" },
+    { code: "check6-4", part: "압축기", point: "압력확인", standard: "3K 이상일 것", freq: "1회/일" },
+    { code: "check6-5", part: "압축기", point: "벨트 확인", standard: "파손이 없을것", freq: "1회/주" },
+    { code: "check6-6", part: "제어반", point: "전자 접촉기 소음 확인", standard: "이상 없을것", freq: "1회/월" },
+    { code: "check6-7", part: "제어반", point: "전기배선 열화상태", standard: "피복 벗겨짐 없을것", freq: "1회/월" }
+  ],
+  "7오일프리콤프100": [
+    { code: "check7-1", part: "모터", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
+    { code: "check7-2", part: "흡착식 드라이어", point: "스위치 확인", standard: "ON 상태일것", freq: "1회/일" },
+    { code: "check7-3", part: "공기탱크", point: "수분 배출", standard: "밸브 오픈하여 배출", freq: "1회/일" },
+    { code: "check7-4", part: "압축기", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
+    { code: "check7-5", part: "압축기", point: "그리스 주입", standard: "가득 채울것", freq: "1회/월" },
+    { code: "check7-6", part: "제어반", point: "전자 접촉기 소음 확인", standard: "이상 없을것", freq: "1회/월" },
+    { code: "check7-7", part: "제어반", point: "전기배선 열화상태", standard: "피복 벗겨짐 없을것", freq: "1회/월" }
+  ]
+};
+
+// 연도 선택 초기화 (현재 연도 기준 -2년 ~ +1년)
+function initYearSelect() {
+  const yearSelect = document.getElementById('yearSelect');
+  const currentYear = new Date().getFullYear();
+  
+  for (let year = currentYear - 2; year <= currentYear + 1; year++) {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = year + '년';
+    if (year === currentYear) option.selected = true;
+    yearSelect.appendChild(option);
+  }
+}
+
+// 해당 월의 일수 계산
+function getDaysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
+}
+
+// 장비명 포맷팅 함수 (1스크래바 -> 1. 스크래바)
+function formatEquipmentName(name) {
+  // 숫자로 시작하는 경우 숫자 뒤에 ". " 추가
+  return name.replace(/^(\d+)([가-힣])/, '$1. $2');
+}
+
+// 조회 버튼 클릭
+document.getElementById('searchBtn').addEventListener('click', async () => {
+  const equipment = document.getElementById('equipmentSelect').value;
+  const year = document.getElementById('yearSelect').value;
+  const month = document.getElementById('monthSelect').value;
+  
+  if (!equipment || !year || !month) {
+    alert('장비, 연도, 월을 모두 선택해주세요.');
+    return;
+  }
+  
+  // 출력용 정보 업데이트 (포맷팅된 장비명 사용)
+  document.getElementById('printEquipName').textContent = formatEquipmentName(equipment);
+  document.getElementById('printMonth').textContent = `${year}년 ${month}월`;
+  
+  await loadData(equipment, year, month);
+});
+
+async function loadData(equipment, year, month) {
+  const tableContent = document.getElementById('tableContent');
+  tableContent.innerHTML = '<div class="loading">데이터를 불러오는 중...</div>';
+  
+  try {
+    // 해당 월의 시작일과 종료일 계산
+    const startDate = `${year}-${month.padStart(2, '0')}-01`;
+    const daysInMonth = getDaysInMonth(year, parseInt(month));
+    const endDate = `${year}-${month.padStart(2, '0')}-${daysInMonth}`;
+    
+    // Supabase에서 데이터 조회
+    const { data, error } = await supabase
+      .from('check_logs')
+      .select('*')
+      .eq('equipment', equipment)
+      .gte('check_time', startDate)
+      .lt('check_time', `${year}-${(parseInt(month) + 1).toString().padStart(2, '0')}-01`)
+      .order('check_time', { ascending: true });
+    
+    if (error) {
+      throw error;
+    }
+    
+    // 데이터 처리 및 테이블 생성
+    renderTable(equipment, year, month, daysInMonth, data);
+    
+    // 특이사항 로드
+    await loadSpecialNotes(data);
+    
+  } catch (error) {
+    console.error('Error:', error);
+    tableContent.innerHTML = `<div class="no-data">데이터를 불러오는데 실패했습니다: ${error.message}</div>`;
+  }
+}
+
+function renderTable(equipment, year, month, daysInMonth, data) {
+  const tableContent = document.getElementById('tableContent');
+  const checkItems = equipments[equipment];
+  
+  if (!checkItems) {
+    tableContent.innerHTML = '<div class="no-data">장비 정보를 찾을 수 없습니다.</div>';
+    return;
+  }
+  
+  // 숫자로 표시해야 하는 항목들 (측정값 항목)
+  const numericCodes = [
+    'check1-6',                            // 저장조 PH 확인
+    'check2-1', 'check3-1', 'check4-1',  // 전도도
+    'check2-5', 'check3-5', 'check4-5',  // 압력 편차
+    'check2-6', 'check3-6', 'check4-6',  // 생산 유량
+    'check6-4'                             // 압력확인
+  ];
+  
+  // 데이터를 날짜별, 코드별로 정리 (제출시간도 함께)
+  const dataMap = {};
+  const timeMap = {};
+  data.forEach(record => {
+    const date = new Date(record.check_time);
+    const day = date.getDate();
+    const code = record.check_code;
+    
+    if (!dataMap[code]) dataMap[code] = {};
+    if (!timeMap[day]) timeMap[day] = '';
+    
+    dataMap[code][day] = record.check_result;
+    
+    // 해당 날짜의 가장 최근 제출 시간 저장
+    const timeStr = date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    if (!timeMap[day] || timeMap[day] < timeStr) {
+      timeMap[day] = timeStr;
+    }
+  });
+  
+  // 테이블 HTML 생성
+  let html = '<table><thead><tr>';
+  html += '<th class="fixed-col-header">코드</th>';
+  html += '<th class="fixed-col-header">부위</th>';
+  html += '<th class="fixed-col-header">점검항목</th>';
+  html += '<th class="fixed-col-header">기준</th>';
+  html += '<th class="fixed-col-header">빈도</th>';
+  
+  // 날짜 헤더 (1일~31일)
+  for (let day = 1; day <= daysInMonth; day++) {
+    html += `<th class="day-header">${day}일</th>`;
+  }
+  html += '</tr></thead><tbody>';
+  
+  // 각 체크 항목별 행 생성
+  checkItems.forEach(item => {
+    html += '<tr>';
+    html += `<td class="fixed-col">${item.code}</td>`;
+    html += `<td class="fixed-col info-col">${item.part}</td>`;
+    html += `<td class="fixed-col info-col">${item.point}</td>`;
+    html += `<td class="fixed-col info-col">${item.standard}</td>`;
+    html += `<td class="fixed-col">${item.freq}</td>`;
+    
+    // 각 날짜별 결과값
+    for (let day = 1; day <= daysInMonth; day++) {
+      const result = dataMap[item.code]?.[day] || '';
+      let cellClass = 'result-cell';
+      let displayValue = '-';
+      
+      if (result) {
+        // 숫자로 표시해야 하는 항목
+        if (numericCodes.includes(item.code)) {
+          cellClass += ' result-text';
+          displayValue = result;
+        }
+        // 정상/OK/1 등은 체크 표시
+        else if (result === '정상' || result === 'OK' || result === 'ok' || result === '1' || result === 'O' || result === 'o') {
+          cellClass += ' result-ok';
+          displayValue = '✓';
+        } 
+        // 비정상/NG/0 등은 X 표시
+        else if (result === '비정상' || result === 'NG' || result === 'ng' || result === '0' || result === 'X' || result === 'x') {
+          cellClass += ' result-ng';
+          displayValue = '✗';
+        } 
+        // 나머지는 텍스트 그대로
+        else {
+          cellClass += ' result-text';
+          displayValue = result.length > 8 ? result.substring(0, 8) + '...' : result;
+        }
+      }
+      
+      html += `<td class="${cellClass}" title="${result}">${displayValue}</td>`;
+    }
+    html += '</tr>';
+  });
+  
+  // 제출 시간 행 추가
+  html += '<tr style="background: #e8f4f8;">';
+  html += '<td class="fixed-col" colspan="5" style="text-align: left; font-weight: bold; padding-left: 10px;">📅 제출 시간</td>';
+  for (let day = 1; day <= daysInMonth; day++) {
+    const timeStr = timeMap[day] || '-';
+    html += `<td class="result-cell" style="font-size: 11px; color: #666;">${timeStr}</td>`;
+  }
+  html += '</tr>';
+  
+  html += '</tbody></table>';
+  
+  if (data.length === 0) {
+    html = '<div class="no-data">해당 기간에 기록된 데이터가 없습니다.</div>';
+  }
+  
+  tableContent.innerHTML = html;
+}
+
+// 특이사항 로드
+async function loadSpecialNotes(data) {
+  const specialNotesSection = document.getElementById('specialNotesSection');
+  
+  // 주차별 특이사항 데이터 추출
+  const weekNotes = {
+    week1: '',
+    week2: '',
+    week3: '',
+    week4: '',
+    week5: ''
+  };
+  
+  // 데이터에서 주차별 특이사항 찾기
+  data.forEach(record => {
+    if (record.check_code && record.check_code.includes('week') && record.check_code.includes('note')) {
+      const weekKey = record.check_code.split('-')[0]; // week1, week2, etc.
+      if (weekNotes.hasOwnProperty(weekKey)) {
+        weekNotes[weekKey] = record.check_result || '';
+      }
+    }
+  });
+  
+  // 주차별 특이사항 표시
+  let hasData = false;
+  for (let i = 1; i <= 5; i++) {
+    const weekKey = `week${i}`;
+    const contentDiv = document.getElementById(`${weekKey}Content`);
+    
+    if (weekNotes[weekKey] && weekNotes[weekKey].trim() !== '') {
+      contentDiv.textContent = weekNotes[weekKey];
+      contentDiv.classList.remove('empty');
+      hasData = true;
+    } else {
+      contentDiv.textContent = '기록 없음';
+      contentDiv.classList.add('empty');
+    }
+  }
+  
+  // 특이사항 섹션 표시 (데이터가 있든 없든 항상 표시)
+  specialNotesSection.style.display = 'block';
+}
+
+// 페이지 로드 시 연도 선택 초기화
+initYearSelect();
+</script>
+
+</body>
+</html>
