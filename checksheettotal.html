@@ -115,18 +115,86 @@
     z-index: 10;
   }
   
-  .fixed-col {
+  .fixed-col-1 {
     position: sticky;
     left: 0;
     background: white;
     z-index: 5;
+    min-width: 90px;
   }
   
-  .fixed-col-header {
+  .fixed-col-2 {
+    position: sticky;
+    left: 90px;
+    background: white;
+    z-index: 5;
+    min-width: 100px;
+  }
+  
+  .fixed-col-3 {
+    position: sticky;
+    left: 190px;
+    background: white;
+    z-index: 5;
+    min-width: 120px;
+  }
+  
+  .fixed-col-4 {
+    position: sticky;
+    left: 310px;
+    background: white;
+    z-index: 5;
+    min-width: 120px;
+  }
+  
+  .fixed-col-5 {
+    position: sticky;
+    left: 430px;
+    background: white;
+    z-index: 5;
+    min-width: 80px;
+    border-right: 2px solid #999 !important;
+  }
+  
+  .fixed-col-header-1 {
     position: sticky;
     left: 0;
     background: #f5f5f5;
     z-index: 15;
+    min-width: 90px;
+  }
+  
+  .fixed-col-header-2 {
+    position: sticky;
+    left: 90px;
+    background: #f5f5f5;
+    z-index: 15;
+    min-width: 100px;
+  }
+  
+  .fixed-col-header-3 {
+    position: sticky;
+    left: 190px;
+    background: #f5f5f5;
+    z-index: 15;
+    min-width: 120px;
+  }
+  
+  .fixed-col-header-4 {
+    position: sticky;
+    left: 310px;
+    background: #f5f5f5;
+    z-index: 15;
+    min-width: 120px;
+  }
+  
+  .fixed-col-header-5 {
+    position: sticky;
+    left: 430px;
+    background: #f5f5f5;
+    z-index: 15;
+    min-width: 80px;
+    border-right: 2px solid #999 !important;
   }
   
   .day-header {
@@ -260,7 +328,8 @@
       white-space: nowrap;
     }
     
-    .fixed-col, .fixed-col-header {
+    .fixed-col-1, .fixed-col-2, .fixed-col-3, .fixed-col-4, .fixed-col-5,
+    .fixed-col-header-1, .fixed-col-header-2, .fixed-col-header-3, .fixed-col-header-4, .fixed-col-header-5 {
       position: static !important;
     }
     
@@ -373,13 +442,13 @@
         <label>장비 선택</label>
         <select id="equipmentSelect">
           <option value="">-- 장비 선택 --</option>
-          <option value="1스크래바">1. 스크래바</option>
-          <option value="2순수설비50">2. 순수설비50</option>
-          <option value="3순수설비100">3. 순수설비100</option>
-          <option value="4순수설비200">4. 순수설비200</option>
-          <option value="5스크류콤프">5. 스크류콤프</option>
-          <option value="6오일프리콤프50">6. 오일프리콤프50</option>
-          <option value="7오일프리콤프100">7. 오일프리콤프100</option>
+          <option value="1. 스크래바">1. 스크래바</option>
+          <option value="2. 순수설비50">2. 순수설비50</option>
+          <option value="3. 순수설비100">3. 순수설비100</option>
+          <option value="4. 순수설비200">4. 순수설비200</option>
+          <option value="5. 스크류콤프">5. 스크류콤프</option>
+          <option value="6. 오일프리콤프50">6. 오일프리콤프50</option>
+          <option value="7. 오일프리콤프100">7. 오일프리콤프100</option>
         </select>
       </div>
       
@@ -478,7 +547,7 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // 장비 데이터 정의
 const equipments = {
-  "1스크래바": [
+  "1. 스크래바": [
     { code: "check1-1", part: "모터", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
     { code: "check1-2", part: "벨트", point: "적정 장력유지 확인", standard: "출렁이지 않을것", freq: "1회/일" },
     { code: "check1-3", part: "본체", point: "노즐 분사 여부 확인", standard: "분사가 될것", freq: "1회/일" },
@@ -487,7 +556,7 @@ const equipments = {
     { code: "check1-6", part: "본체", point: "저장조 PH 확인", standard: "PH7 이상일것", freq: "1회/일" },
     { code: "check1-7", part: "베어링", point: "그리스 주입", standard: "가득 채울것", freq: "1회/월" }
   ],
-  "2순수설비50": [
+  "2. 순수설비50": [
     { code: "check2-1", part: "전도도", point: "판넬확인", standard: "1㏁ 이상", freq: "1회/일" },
     { code: "check2-2", part: "펌프", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
     { code: "check2-3", part: "펌프", point: "누수 확인", standard: "없을것", freq: "1회/일" },
@@ -496,7 +565,7 @@ const equipments = {
     { code: "check2-6", part: "멤브레인", point: "생산 유량", standard: "35L/min 이상", freq: "1회/주" },
     { code: "check2-7", part: "제어반", point: "전기배선", standard: "피복 벗겨짐 없을것", freq: "1회/월" }
   ],
-  "3순수설비100": [
+  "3. 순수설비100": [
     { code: "check3-1", part: "전도도", point: "판넬확인", standard: "1㏁ 이상", freq: "1회/일" },
     { code: "check3-2", part: "펌프", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
     { code: "check3-3", part: "펌프", point: "누수 확인", standard: "없을것", freq: "1회/일" },
@@ -505,7 +574,7 @@ const equipments = {
     { code: "check3-6", part: "멤브레인", point: "생산 유량", standard: "6 ton 이상", freq: "1회/주" },
     { code: "check3-7", part: "제어반", point: "전기배선", standard: "피복 벗겨짐 없을것", freq: "1회/월" }
   ],
-  "4순수설비200": [
+  "4. 순수설비200": [
     { code: "check4-1", part: "전도도", point: "판넬확인", standard: "5㏁ 이상", freq: "1회/일" },
     { code: "check4-2", part: "펌프", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
     { code: "check4-3", part: "펌프", point: "누수 확인", standard: "없을것", freq: "1회/일" },
@@ -514,7 +583,7 @@ const equipments = {
     { code: "check4-6", part: "멤브레인", point: "생산 유량", standard: "10 ton 이상", freq: "1회/주" },
     { code: "check4-7", part: "제어반", point: "전기배선 확인", standard: "피복 벗겨짐 없을것", freq: "1회/월" }
   ],
-  "5스크류콤프": [
+  "5. 스크류콤프": [
     { code: "check5-1", part: "모터", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
     { code: "check5-2", part: "흡착식 드라이어", point: "스위치 확인", standard: "ON 상태일것", freq: "1회/일" },
     { code: "check5-3", part: "공기탱크", point: "수분 배출", standard: "밸브 오픈하여 배출", freq: "1회/일" },
@@ -523,7 +592,7 @@ const equipments = {
     { code: "check5-6", part: "제어반", point: "전자 접촉기 소음 확인", standard: "이상 없을것", freq: "1회/월" },
     { code: "check5-7", part: "제어반", point: "전기배선 열화상태", standard: "피복 벗겨짐 없을것", freq: "1회/월" }
   ],
-  "6오일프리콤프50": [
+  "6. 오일프리콤프50": [
     { code: "check6-1", part: "모터", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
     { code: "check6-2", part: "흡착식 드라이어", point: "스위치 확인", standard: "ON 상태일것", freq: "1회/일" },
     { code: "check6-3", part: "공기탱크", point: "수분 배출", standard: "밸브 오픈하여 배출", freq: "1회/일" },
@@ -532,7 +601,7 @@ const equipments = {
     { code: "check6-6", part: "제어반", point: "전자 접촉기 소음 확인", standard: "이상 없을것", freq: "1회/월" },
     { code: "check6-7", part: "제어반", point: "전기배선 열화상태", standard: "피복 벗겨짐 없을것", freq: "1회/월" }
   ],
-  "7오일프리콤프100": [
+  "7. 오일프리콤프100": [
     { code: "check7-1", part: "모터", point: "소음 확인", standard: "이상 없을것", freq: "1회/일" },
     { code: "check7-2", part: "흡착식 드라이어", point: "스위치 확인", standard: "ON 상태일것", freq: "1회/일" },
     { code: "check7-3", part: "공기탱크", point: "수분 배출", standard: "밸브 오픈하여 배출", freq: "1회/일" },
@@ -562,10 +631,9 @@ function getDaysInMonth(year, month) {
   return new Date(year, month, 0).getDate();
 }
 
-// 장비명 포맷팅 함수 (1스크래바 -> 1. 스크래바)
+// 장비명 포맷팅 함수 (이미 번호가 포함되어 있음)
 function formatEquipmentName(name) {
-  // 숫자로 시작하는 경우 숫자 뒤에 ". " 추가
-  return name.replace(/^(\d+)([가-힣])/, '$1. $2');
+  return name;
 }
 
 // 조회 버튼 클릭
@@ -661,11 +729,11 @@ function renderTable(equipment, year, month, daysInMonth, data) {
   
   // 테이블 HTML 생성
   let html = '<table><thead><tr>';
-  html += '<th class="fixed-col-header">코드</th>';
-  html += '<th class="fixed-col-header">부위</th>';
-  html += '<th class="fixed-col-header">점검항목</th>';
-  html += '<th class="fixed-col-header">기준</th>';
-  html += '<th class="fixed-col-header">빈도</th>';
+  html += '<th class="fixed-col-header-1">코드</th>';
+  html += '<th class="fixed-col-header-2">부위</th>';
+  html += '<th class="fixed-col-header-3">점검항목</th>';
+  html += '<th class="fixed-col-header-4">기준</th>';
+  html += '<th class="fixed-col-header-5">빈도</th>';
   
   // 날짜 헤더 (1일~31일)
   for (let day = 1; day <= daysInMonth; day++) {
@@ -676,11 +744,11 @@ function renderTable(equipment, year, month, daysInMonth, data) {
   // 각 체크 항목별 행 생성
   checkItems.forEach(item => {
     html += '<tr>';
-    html += `<td class="fixed-col">${item.code}</td>`;
-    html += `<td class="fixed-col info-col">${item.part}</td>`;
-    html += `<td class="fixed-col info-col">${item.point}</td>`;
-    html += `<td class="fixed-col info-col">${item.standard}</td>`;
-    html += `<td class="fixed-col">${item.freq}</td>`;
+    html += `<td class="fixed-col-1">${item.code}</td>`;
+    html += `<td class="fixed-col-2 info-col">${item.part}</td>`;
+    html += `<td class="fixed-col-3 info-col">${item.point}</td>`;
+    html += `<td class="fixed-col-4 info-col">${item.standard}</td>`;
+    html += `<td class="fixed-col-5">${item.freq}</td>`;
     
     // 각 날짜별 결과값
     for (let day = 1; day <= daysInMonth; day++) {
@@ -718,7 +786,7 @@ function renderTable(equipment, year, month, daysInMonth, data) {
   
   // 제출 시간 행 추가
   html += '<tr style="background: #e8f4f8;">';
-  html += '<td class="fixed-col" colspan="5" style="text-align: left; font-weight: bold; padding-left: 10px;">📅 제출 시간</td>';
+  html += '<td class="fixed-col-1" colspan="5" style="text-align: left; font-weight: bold; padding-left: 10px;">📅 제출 시간</td>';
   for (let day = 1; day <= daysInMonth; day++) {
     const timeStr = timeMap[day] || '-';
     html += `<td class="result-cell" style="font-size: 11px; color: #666;">${timeStr}</td>`;
